@@ -24,9 +24,11 @@ def connect(ip, port, user, passw, tries=0):
         TcpSocket.send(loginSend.encode())
 
         print("Logged in")
+        TcpSocket.send("SPEC\n".encode())
     except:
         print("Failed... Retrying...")
         connect(ip, port, user, passw, tries+1)
+        
 
 
 #Recieve from server
@@ -38,9 +40,9 @@ def recieve():
     while(True):
         recieve = TcpSocket.recv(1024)
         if(len(recieve)>=0):
-            LogFile.write("--" +time.asctime() + "--\n" + recieve.decode() + "\n----\n\n")
-            #process(recieve.decode())
-            print("Recieved : " + recieve.decode())
+            LogFile.write("--" +time.asctime() + "--\n" + recieve.decode(encoding="ISO-8859-1") + "\n----\n\n")
+            process(recieve.decode(encoding="ISO-8859-1"))
+            #print("Recieved : " + recieve.decode())
         else:
             break
 
@@ -50,8 +52,17 @@ def recieve():
 
 
 #Process info and send
-#def process(rcv):
-    #Process
+def process(rcv):
+    rcv = rcv.split("\n")
+    for i in rcv[:-1]:  #[:-1] to avoid empty list at the end
+        i = i.split()
+        if i[0] == "SAY":
+            try:
+                user = i[1].split("^")[1][2:]
+                message = " ".join(i[2:])
+                print(user + " : " + message)
+            except:
+                1+1
 
 
 #Ping the server to keep connection alive
@@ -60,7 +71,7 @@ def ping():
     while(True): 
         time.sleep(10)
         TcpSocket.send(pingData)
-        print("Sent: " + pingData.decode())
+        #print("Sent: " + pingData.decode())
 
 
 def main():
