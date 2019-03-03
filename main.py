@@ -1,8 +1,12 @@
 #!/usr/bin/python3
+
 import socket
 import time
 import hashlib
 import threading
+
+#BotCommands
+import BotCommands as bot
 
 #TcpSocket
 TcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -37,13 +41,16 @@ def recieve():
     LogFile.write("-----------" + time.asctime() + "-----------\n\n\n\n")
 
     while(True):
-        recieve = TcpSocket.recv(1024)
-        if(len(recieve)>=0):
-            LogFile.write("--" +time.asctime() + "--\n" + recieve.decode(encoding="ISO-8859-1") + "\n----\n\n")
-            process(recieve.decode(encoding="ISO-8859-1"))
-            #print("Recieved : " + recieve.decode())
-        else:
-            break
+        try:
+            recieve = TcpSocket.recv(1024)
+            if(len(recieve)>=0):
+                LogFile.write("--" +time.asctime() + "--\n" + recieve.decode(encoding="ISO-8859-1") + "\n----\n\n")
+                process(recieve.decode(encoding="ISO-8859-1"))
+                #print("Recieved : " + recieve.decode())
+            else:
+                break
+        except:
+            exit()  #Reaches here if the Socket is closed
 
     LogFile.close()
     print("Closing...")
@@ -55,11 +62,18 @@ def process(rcv):
     rcv = rcv.split("\n")
     for i in rcv[:-1]:  #[:-1] to avoid empty list at the end
         i = i.split()
+
+        if i[0] == "DISCONNECTED":
+            TcpSocket.close()
+            print("Disconnected from the server. Reason : " + " ".join(i[2:]))
+            exit()
+
         if i[0] == "SAY":
             try:
                 user = i[1].split("^")[1][2:]
                 message = " ".join(i[2:])
                 print(user + " : " + message)
+                bot.processSay(TcpSocket, user, message)
             except:
                 1+1
 
